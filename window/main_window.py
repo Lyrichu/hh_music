@@ -9,6 +9,7 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtNetwork import QNetworkAccessManager
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget, QSlider, QLabel, QSizePolicy, QHBoxLayout
 
+from const.music_playing_constants import *
 from core.core_auto_play import CoreAutoPlay
 from core.core_music_player import CoreMusicPlayer, CoreMusicAdvancePlayer
 from music_meta.music_meta import MusicWithTime, MusicPlayStatus
@@ -172,6 +173,8 @@ class MainWindow(QMainWindow):
         self.play_button = MyPushButton(os.path.join(resource_dir, 'icons/music_play_icon.png'))
         # 下一首按钮
         self.next_button = MyPushButton(os.path.join(resource_dir, 'icons/next_icon.png'))
+        # 播放顺序按钮
+        self.play_order_button = MyPushButton(os.path.join(resource_dir, "icons/play_song_in_order.png"))
         # 音乐播放进度(文本动态更新)
         self.music_play_progress_label = QLabel()
         # 音量调节滑块
@@ -203,6 +206,8 @@ class MainWindow(QMainWindow):
         self.bottom_layout.addWidget(self.play_button)
         # 下一首按钮
         self.bottom_layout.addWidget(self.next_button)
+        # 播放顺序按钮
+        self.bottom_layout.addWidget(self.play_order_button)
         # 音乐播放进度(文本展示)
         self.bottom_layout.addWidget(self.music_play_progress_label)
         # 音量按钮
@@ -218,11 +223,11 @@ class MainWindow(QMainWindow):
         # 监听窗口的切换
         self.stacked_widget.currentChanged.connect(self.onStackedWindowCurChanged)
         # 上一首
-        self.prev_button.clicked.connect(self.core_music_player.prev_music)
+        self.prev_button.clicked.connect(self.core_music_player.play_prev_music)
         # 播放按钮
         self.play_button.clicked.connect(self.core_music_player.play_music)
         # 下一首
-        self.next_button.clicked.connect(self.core_music_player.next_music)
+        self.next_button.clicked.connect(self.core_music_player.play_next_music)
         # 音量滑块
         self.volume_button.clicked.connect(self.core_music_player.toggle_volume_slider)
         # 调整音量
@@ -231,7 +236,9 @@ class MainWindow(QMainWindow):
         self.player.positionChanged.connect(self.core_auto_play.update_music_play_position)
         # 自动播放下一首
         self.player.mediaStatusChanged.connect(self.core_music_player.auto_play_next)
-        # 用户滑动进度条可以快进/后退 到指定位置:：
+        # 调整音乐播放顺序
+        self.play_order_button.clicked.connect(self.core_music_player.change_play_order)
+        # 用户滑动进度条可以快进/后退 到指定位置
         self.music_play_slider.sliderMoved.connect(self.core_auto_play.music_play_slider_changed)
         # 定时器 使得 播放进度条可以每秒自动更新
         self.music_play_slider_timer = QTimer()
@@ -256,6 +263,8 @@ class MainWindow(QMainWindow):
         # 初始化音量
         self.core_music_player.set_volume()
         self.player.setAudioOutput(self.audioOutput)
+        # 记录播放顺序
+        self.play_order = MusicPlayingOrder.PLAY_IN_ORDER
 
     def initPlayStatus(self):
         """
