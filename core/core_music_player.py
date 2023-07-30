@@ -61,6 +61,9 @@ class CoreMusicPlayer:
         else:
             self.cycle_music()
 
+        # 同时更新歌词
+        self.main_window.lyric_window.prepare_lyrics()
+
     def play_prev_music(self):
         """
         按照给定的 order 确定如何播放上一首音乐
@@ -72,6 +75,8 @@ class CoreMusicPlayer:
             self.random_prev_music()
         else:
             self.cycle_music()
+        # 同时更新歌词
+        self.main_window.lyric_window.prepare_lyrics()
 
     def next_music(self):
         """

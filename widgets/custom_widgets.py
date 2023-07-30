@@ -8,8 +8,8 @@ import os
 import threading
 
 import requests
-from PySide6.QtCore import QSize, Qt, QRect
-from PySide6.QtGui import QIcon, QMouseEvent, QPainter, QColor, QTextFormat
+from PySide6.QtCore import QSize, Qt, QRect, Signal
+from PySide6.QtGui import QIcon, QMouseEvent, QPainter, QColor, QTextFormat, QPainterPath
 from PySide6.QtWidgets import *
 
 from util.configs import load_music_config
@@ -33,6 +33,47 @@ class MyPushButton(QPushButton):
     def resizeEvent(self, event):
         self.setIconSize(QSize(24, 24))
         super().resizeEvent(event)
+
+
+class ClickableLabel(QLabel):
+    """
+    自定义可点击的QLabel
+    """
+    clicked = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__()
+        self.parent = parent
+        self.setEnabled(True)
+
+    def mousePressEvent(self, event):
+        self.clicked.emit()
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPainter, QPixmap
+from PySide6.QtWidgets import QLabel
+
+
+class CircularImageLabel(QLabel):
+    """
+    可以展示圆形图像的QLabel
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.pixmap = QPixmap()
+
+    def setPixmap(self, pixmap):
+        self.pixmap = pixmap
+        self.update()  # 更新视图
+
+    def paintEvent(self, event):
+        if not self.pixmap.isNull():  # 检查 pixmap 是否为空
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.Antialiasing, True)
+            path = QPainterPath()
+            path.addEllipse(0, 0, self.width(), self.height())
+            painter.setClipPath(path)
+            painter.drawPixmap(0, 0, self.pixmap.scaled(self.width(), self.height(), Qt.KeepAspectRatioByExpanding))
 
 
 class HoverTableWidget(QTableWidget):
@@ -208,6 +249,7 @@ class LineNumberArea(QWidget):
     """
     显示行号的区域
     """
+
     def __init__(self, editor):
         super().__init__(editor)
         self.myeditor = editor
@@ -296,4 +338,3 @@ class TextEditWithLineNumber(QPlainTextEdit):
             selection.cursor.clearSelection()
             extraSelections.append(selection)
         self.setExtraSelections(extraSelections)
-
