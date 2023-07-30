@@ -6,6 +6,9 @@
 """
 from PySide6.QtCore import QThread, Signal
 
+from api.kuwo_music_api import *
+from music_meta.music_meta import Music
+from music_meta.singer_meta import Singer
 from util.music_tools import search_kuwo_music_by_keywords
 
 
@@ -34,3 +37,40 @@ class SearchWorker(QThread):
         # Emit the signal when the search is finished
         self.finished_signal.emit(*result)
 
+
+class SingerHotMusicWorker(QThread):
+    """
+    获取歌手的热门歌曲任务
+    """
+    singer_hot_musics = Signal(list)
+    finished = Signal()
+
+    def __init__(self, singer_id):
+        super().__init__()
+        self.singer_id = singer_id
+
+    def run(self):
+        rsp = get_kuwo_all_singer_music(self.singer_id)
+        music_datas = [Music.from_dict(d) for d in rsp["data"]["list"]]
+        self.singer_hot_musics.emit(music_datas)
+        self.finished.emit()
+
+
+class SingerInfoWorker(QThread):
+
+    singer_info = Signal(Singer)
+    finished = Signal()
+
+    def __init__(self, singer_name):
+        """
+        通过歌手名字查询歌手基本信息
+        :param singer_name: 歌手名字
+        """
+        super().__init__()
+        self.singer_name = singer_name
+
+    def run(self) -> None:
+        rsp = get_kuwo_artist_by_search_keyword(self.singer_name)
+        singer = Singer.from_dict(rsp["data"]["list"][0])
+        self.singer_info.emit(singer)
+        self.finished.emit()

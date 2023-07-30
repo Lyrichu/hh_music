@@ -13,7 +13,7 @@ class Music:
                  barrage, ad_type, mvpayinfo, isstar, rid, score100, ad_subtype, content_type,
                  track, hasLossless, hasmv, albumid, pay, artistid, albumpic,
                  originalsongtype, songTimeMinutes, isListenFee, pic120, online,
-                 payInfo, tme_musician_adtype, play_url=None):
+                 payInfo, tme_musician_adtype, play_url=None, lyrics=None):
         """
 
         :param musicrid:
@@ -45,7 +45,8 @@ class Music:
         :param online:
         :param payInfo:
         :param tme_musician_adtype:
-        :param play_url:
+        :param play_url:播放链接
+        :param lyrics:歌曲歌词
         """
         self.musicrid = musicrid
         self.artist = artist
@@ -77,6 +78,7 @@ class Music:
         self.payInfo = payInfo
         self.tme_musician_adtype = tme_musician_adtype
         self.play_url = play_url
+        self.lyrics = lyrics
 
     @staticmethod
     def from_dict(data: dict):
@@ -247,6 +249,7 @@ class MusicPlayStatus:
     """
     音乐播放状态类
     """
+
     def __init__(self, music_table=None, music_data=[], play_music_index=-1, invalid_play_music_indexes=set()):
         """
         :param music_table: 音乐表格数据,一般与music_data 是同步的

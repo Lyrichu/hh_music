@@ -126,14 +126,17 @@ class MusicSearcher(QWidget):
         self.result_hint_bar.setVisible(False)
 
     @staticmethod
-    def createMusicTable(main_window):
+    def createMusicTable(main_window, rows=0, cols=4,
+                         headers=["歌曲", "歌手", "专辑", "时长"]):
         """
-        创建一个通用的音乐展示table布局,表头为:
-        ["歌曲", "歌手", "专辑", "时长"]
+        创建一个通用的音乐展示table布局
         :param main_window:
+        :param rows: 表格初始化行数
+        :param cols: 表格初始化列数
+        :param headers: 表头标题
         :return:
         """
-        music_table = HoverTableWidget(main_window, 0, 4)  # 0 rows, 4 columns
+        music_table = HoverTableWidget(main_window, rows, cols)
         music_table.verticalHeader().setVisible(False)  # hide vertical header
         music_table.horizontalHeader().setVisible(True)  # hide horizontal header initially
         music_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -147,7 +150,7 @@ class MusicSearcher(QWidget):
         # 表格是只读的
         music_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         music_table.setVisible(False)
-        music_table.setHorizontalHeaderLabels(["歌曲", "歌手", "专辑", "时长"])
+        music_table.setHorizontalHeaderLabels(headers)
         music_table.setRowCount(0)  # clear the table
         return music_table
 

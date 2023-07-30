@@ -4,13 +4,17 @@
 """
 音乐核心搜索功能的实现
 """
+import traceback
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import QMessageBox, QProgressDialog, QTableWidgetItem
 
 from q_thread.q_thread_tasks import SearchWorker
 from util.logs import LOGGER
+from music_meta.lyric_meta import *
 from util.music_tools import search_kuwo_music_by_keywords, get_music_download_url_by_mid
+from api.kuwo_music_api import *
 
 
 class CoreMusicSearch:
@@ -46,7 +50,7 @@ class CoreMusicSearch:
         query = self.main_window.search_widget.search_input.text()
         _, next_page_data = search_kuwo_music_by_keywords(query, self.current_page)
         self.main_window.getCurMusicPlayStatus().music_data.extend(next_page_data)
-        self._check_music_data_invalid_parts()
+        self.search_backend_task()
         # Update the table
         self.add_music_table_datas(next_page_data, True)
         self.is_loading = False
@@ -65,7 +69,7 @@ class CoreMusicSearch:
             QMessageBox.warning(self.main_window.search_widget, "额出错了...",
                                 f"搜索 {self.main_window.search_widget.search_input.text()} 失败,请稍后重试~")
         self.main_window.stacked_widget.currentWidget().music_play_status.music_data = search_results
-        self._check_music_data_invalid_parts()
+        self.search_backend_task()
         self.main_window.stacked_widget.currentWidget().music_play_status.music_table.setVisible(True)
         self.main_window.stacked_widget.currentWidget().music_play_status.music_table.horizontalHeader().setVisible(
             True)
@@ -76,19 +80,49 @@ class CoreMusicSearch:
         self.main_window.search_widget.result_label.setText(f"共有 {total} 条匹配结果")
         self.add_music_table_datas(search_results)
 
+    def search_backend_task(self):
+        """
+        搜索时触发的后台任务
+        :return:
+        """
+        self._check_music_data_invalid_parts()
+        self._get_music_lyrics()
+
+    def _get_music_lyrics(self):
+        """
+        后台获取当前歌曲的歌词
+        :return:
+        """
+        def _parse_lyrics(mid, music):
+            try:
+                rsp = get_kuwo_music_lyric(mid)
+                music.lyrics = Lyric.lyrics_from_dict(rsp)
+                LOGGER.info(f"parse lyrics succeed for music:{music.name}")
+            except Exception as e:
+                LOGGER.error(f"parse lyrics error for music:{music.name}: " + traceback.format_exc())
+
+        if self.main_window.getCurMusicPlayStatus().music_data:
+            for i, music in enumerate(self.main_window.getCurMusicPlayStatus().music_data):
+                if music.lyrics:
+                    continue
+                else:
+                    mid = music.rid
+                    self.main_window.search_widget.thread_pool.submit(
+                        lambda mid=mid, music=music: _parse_lyrics(mid, music)
+                    )
+
     def _check_music_data_invalid_parts(self):
         """
         后台检测 music_data 中 无法播放/下载的部分,标记为灰色不可用状态
         :return:
         """
-
         def _mark_invalid(i, music):
             if i in self.main_window.getCurMusicPlayStatus().invalid_play_music_indexes:
                 return
             if music.play_url is None:
                 music.play_url = get_music_download_url_by_mid(music.rid)
             if music.play_url is None:
-                self.main_window.search_widget.core_music_search.mark_music_table_row(i, disable=True)
+                self.main_window.mark_music_table_row(i, disable=True)
                 LOGGER.info(f"mark {music.artist}/{music.name} as disable succeed!")
 
         if self.main_window.getCurMusicPlayStatus().music_data:
@@ -109,22 +143,36 @@ class CoreMusicSearch:
         """
         if not append:
             music_table.setRowCount(0)
+        col_cnt = music_table.columnCount()
         for music in music_datas:
             row = music_table.rowCount()
             music_table.insertRow(row)
             # create QTableWidgetItem and set its text alignment
-            name_item = QTableWidgetItem(music.name)
-            name_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-            music_table.setItem(row, 0, name_item)
-            artist_item = QTableWidgetItem(music.artist)
-            artist_item.setTextAlignment(Qt.AlignCenter)
-            music_table.setItem(row, 1, artist_item)
-            album_item = QTableWidgetItem(music.album)
-            album_item.setTextAlignment(Qt.AlignCenter)
-            music_table.setItem(row, 2, album_item)
-            duration_item = QTableWidgetItem(music.songTimeMinutes)
-            duration_item.setTextAlignment(Qt.AlignCenter)
-            music_table.setItem(row, 3, duration_item)
+            # 如果是4列,展示 歌曲/歌手/专辑/时长
+            if col_cnt == 4:
+                name_item = QTableWidgetItem(music.name)
+                name_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                music_table.setItem(row, 0, name_item)
+                artist_item = QTableWidgetItem(music.artist)
+                artist_item.setTextAlignment(Qt.AlignCenter)
+                music_table.setItem(row, 1, artist_item)
+                album_item = QTableWidgetItem(music.album)
+                album_item.setTextAlignment(Qt.AlignCenter)
+                music_table.setItem(row, 2, album_item)
+                duration_item = QTableWidgetItem(music.songTimeMinutes)
+                duration_item.setTextAlignment(Qt.AlignCenter)
+                music_table.setItem(row, 3, duration_item)
+            else:
+                # 如果是3列, 展示 歌曲/专辑/时长
+                name_item = QTableWidgetItem(music.name)
+                name_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                music_table.setItem(row, 0, name_item)
+                album_item = QTableWidgetItem(music.album)
+                album_item.setTextAlignment(Qt.AlignCenter)
+                music_table.setItem(row, 1, album_item)
+                duration_item = QTableWidgetItem(music.songTimeMinutes)
+                duration_item.setTextAlignment(Qt.AlignCenter)
+                music_table.setItem(row, 2, duration_item)
 
         return music_table
 

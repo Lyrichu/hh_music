@@ -3,7 +3,7 @@
 # @Time: 2023/7/23 16:50
 import os
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, QEvent
 from PySide6.QtGui import QAction
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtNetwork import QNetworkAccessManager
@@ -16,10 +16,13 @@ from music_meta.music_meta import MusicWithTime, MusicPlayStatus
 from window.music_searcher_window import MusicSearcher
 from window.recent_play_window import RecentPlayWindow
 from util.configs import save_music_config
+from util.utils import *
 from util.music_tools import load_user_history_music_play_list_from_file, write_to_user_history_music_play_list_file
 from widgets.custom_widgets import *
 from window.log_window import LogWindow
 from window.music_download_window import DownloadWindow
+from window.lyric_window import LyricWindow
+from window.singer_window.singer_main_window import SingerMainWindow
 
 resource_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "resource")
 
@@ -60,6 +63,28 @@ class MainWindow(QMainWindow):
         """
         self.stacked_widget.setCurrentWidget(self.search_widget)
 
+    def show_lyric_window(self):
+        """
+        展示歌词窗口
+        :return:
+        """
+        if self.stacked_widget.currentWidget() is not self.lyric_window:
+            # 如果当前不是歌词窗口,则切换到歌词窗口
+            # 准备歌词
+            self.lyric_window.prepare_lyrics()
+            self.stacked_widget.setCurrentWidget(self.lyric_window)
+        else:
+            # 如果已经是歌词窗口了,则返回到搜索窗口
+            self.show_search_window()
+
+    def show_singer_main_window(self):
+        """
+        展示歌手详情窗口
+        :return:
+        """
+        # 准备好歌手详情数据
+        self.singer_main_window.show_singer_hot_music_window()
+
     def initUI(self):
         """
         初始化UI 界面
@@ -95,12 +120,19 @@ class MainWindow(QMainWindow):
         # 管理切换的窗口
         self.stacked_widget = QStackedWidget()
         self.layout().addWidget(self.stacked_widget)
-
+        # 搜索窗口
         self.search_widget = MusicSearcher(self)
+        # 最近播放窗口
         self.recent_play_window = RecentPlayWindow(self)
+        # 显示歌词的窗口
+        self.lyric_window = LyricWindow(self)
+        # 显示歌手详情的窗口
+        self.singer_main_window = SingerMainWindow(self)
 
         self.stacked_widget.addWidget(self.search_widget)
         self.stacked_widget.addWidget(self.recent_play_window)
+        self.stacked_widget.addWidget(self.lyric_window)
+        self.stacked_widget.addWidget(self.singer_main_window)
 
     def initCores(self):
         """
@@ -162,11 +194,11 @@ class MainWindow(QMainWindow):
 
         # Create bottom bar widgets
         # 封面
-        self.cover_label = QLabel()
+        self.cover_label = ClickableLabel(self)
         # 歌曲
         self.title_label = QLabel()
         # 歌手
-        self.artist_label = QLabel()
+        self.artist_label = ClickableLabel(self)
         # 上一首按钮
         self.prev_button = MyPushButton(os.path.join(resource_dir, 'icons/prev_icon.png'))
         # 播放按钮
@@ -232,6 +264,10 @@ class MainWindow(QMainWindow):
         self.volume_button.clicked.connect(self.core_music_player.toggle_volume_slider)
         # 调整音量
         self.volume_slider.valueChanged.connect(self.core_music_player.set_volume)
+        # 歌曲封面,点击之后展示歌词窗口
+        self.cover_label.clicked.connect(self.show_lyric_window)
+        # 歌手,点击之后展示歌手详情窗口
+        self.artist_label.clicked.connect(self.show_singer_main_window)
         # 播放器的播放进度改变时
         self.player.positionChanged.connect(self.core_auto_play.update_music_play_position)
         # 自动播放下一首
@@ -254,8 +290,10 @@ class MainWindow(QMainWindow):
         :return:
         """
         # 网络资源管理器
-        self.network_manager = QNetworkAccessManager(self)
-        self.network_manager.finished.connect(self.core_auto_play.handle_finished)
+        self.music_cover_downloader = QNetworkAccessManager(self)
+        self.music_cover_downloader.finished.connect(self.core_auto_play.update_music_cover)
+        # 歌曲封面 pixmap
+        self.music_pixmap = None
         # 初始化播放器
         self.player = QMediaPlayer()
         # 音频输出
@@ -306,7 +344,36 @@ class MainWindow(QMainWindow):
         curWindow = self.stacked_widget.currentWidget()
         if curWindow in [self.search_widget, self.recent_play_window]:
             return curWindow.music_play_status
+        elif curWindow is self.singer_main_window:
+            singer_cur_window = self.singer_main_window.stacked_widget.currentWidget()
+            if singer_cur_window is self.singer_main_window.singer_hot_music_window:
+                return self.singer_main_window.singer_hot_music_window.music_play_status
+            else:
+                return self.singer_main_window.singer_music_window.music_play_status
         return self.search_widget.music_play_status
+
+    def changeEvent(self, event):
+        """
+        监听窗口的改变
+        :param event:
+        :return:
+        """
+        if event.type() == QEvent.WindowStateChange:
+            # 进入全屏
+            enter_fullscreen = self.windowState() & Qt.WindowFullScreen
+            # 退出全屏
+            exit_fullscreen = event.oldState() & Qt.WindowFullScreen and not self.windowState() & Qt.WindowFullScreen
+            if enter_fullscreen or exit_fullscreen:
+                # 动态更改歌曲封面
+                self.lyric_window.update_image()
+                # 更改歌词字体大小/展示行数
+                if enter_fullscreen:
+                    self.lyric_window.lyric_font_size = 14
+                    self.lyric_window.lyric_manager.lyric_part_display_lines = 10
+                else:
+                    self.lyric_window.lyric_font_size = 12
+                    self.lyric_window.lyric_manager.lyric_part_display_lines = 5
+                self.lyric_window.lyric_display.setFont(get_custom_font(font_size=self.lyric_window.lyric_font_size))
 
     def closeEvent(self, event):
         """
