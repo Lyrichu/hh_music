@@ -47,11 +47,15 @@ class RecentPlayWindow(QWidget):
         self.back_button.setText("返回")
 
         self.recent_play_label = QLabel("最近收听🎵")
+        # 清空收听历史
+        self.clear_history_listening_button = MyPushButton(os.path.join(resource_dir, "icons/clear_icon.png"))
+        self.clear_history_listening_button.setText("清空历史")
         self.back_home_button = MyPushButton(os.path.join(resource_dir, "icons/back_home_icon.png"))
         self.back_home_button.setText("返回主页")
 
         header_layout.addWidget(self.back_button)
         header_layout.addWidget(self.recent_play_label)
+        header_layout.addWidget(self.clear_history_listening_button)
         header_layout.addWidget(self.back_home_button)
 
         self.music_table = MusicSearcher.createMusicTable(self.main_window)
@@ -67,8 +71,9 @@ class RecentPlayWindow(QWidget):
         self.music_play_status = MusicPlayStatus()
 
     def initSlotConnect(self):
-        self.back_button.clicked.connect(self.main_window.show_search_window)
+        self.back_button.clicked.connect(self.main_window.back_to_prev_window)
         self.back_home_button.clicked.connect(self.main_window.show_search_window)
+        self.clear_history_listening_button.clicked.connect(self.clear_listening_history)
 
     def add_recent_play_list_to_music_table(self):
         """
@@ -86,3 +91,16 @@ class RecentPlayWindow(QWidget):
             music_datas,
             0
         )
+
+    def clear_listening_history(self):
+        """
+        清空收听历史
+        :return:
+        """
+        self.main_window.his_play_list = []
+        # 清空历史播放 music_table 的数据
+        CoreMusicSearch.common_add_music_table_datas(self.music_table, [])
+
+    def show_window(self):
+        self.main_window.show_recent_play_window()
+

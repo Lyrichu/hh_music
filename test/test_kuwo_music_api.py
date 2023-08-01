@@ -13,11 +13,13 @@ class KuwoMusicApiTest(TestCase):
         mid1 = 162457325
         br1 = KuwoMusicBr.BR_192KMP3.value
         rsp1 = get_kuwo_music_play_url(mid1, br1)
+        print(rsp1)
         self.assertNotEqual(200, rsp1["code"])
 
         mid2 = 235882595
         br2 = KuwoMusicBr.BR_128KMP3.value
         rsp2 = get_kuwo_music_play_url(mid2, br2)
+        print(rsp2)
         self.assertEqual(200, rsp2["code"])
 
     def test_get_kuwo_mv_play_url(self):
@@ -73,7 +75,7 @@ class KuwoMusicApiTest(TestCase):
         self.assertEqual(200, rsp["code"])
 
     def test_get_kuwo_artist_by_search_keyword(self):
-        key = "周深"
+        key = "张韶涵"
         pn = 1
         rn = 10
         rsp = get_kuwo_artist_by_search_keyword(key=key, pn=pn, rn=rn)

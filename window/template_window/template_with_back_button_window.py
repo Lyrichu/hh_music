@@ -38,3 +38,12 @@ class TemplateWithBackButtonWindow(BaseTemplateWindow):
         header_layout.addWidget(self.back_home_button)
 
         self.layout.addWidget(self.header_bar)
+
+    def initSlotConnect(self):
+        """
+        默认返回按钮，返回上一个窗口;
+        主页按钮返回搜索主页
+        :return:
+        """
+        self.back_button.clicked.connect(self.main_window.back_to_prev_window)
+        self.back_home_button.clicked.connect(self.main_window.show_search_window)

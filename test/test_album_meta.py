@@ -14,6 +14,7 @@ class AlbumTest(TestCase):
     def test_from_dict(self):
         artist_id = 89199
         rsp = get_kuwo_all_singer_album(artist_id)
+        print(rsp)
         album = Album.from_dict(rsp["data"]["albumList"][0])
         print(album)
 

@@ -10,6 +10,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QTextEdit, QHBoxLayout, QSizePoli
 from music_meta.lyric_meta import *
 from api.kuwo_music_api import get_kuwo_music_lyric
 from util.utils import *
+from window.template_window.template_with_back_button_window import TemplateWithBackButtonWindow
 
 
 class LyricManager:
@@ -70,11 +71,17 @@ class LyricManager:
         self.current_line = 0
 
 
-class LyricWindow(QWidget):
+class LyricWindow(TemplateWithBackButtonWindow):
     def __init__(self, main_window):
         super().__init__(main_window)
         self.main_window = main_window
         self.setWindowTitle('歌词')
+        self.initUI()
+        self.initSlotConnect()
+        self.lyric_manager = LyricManager(self)
+
+    def initUI(self):
+        super().initUI()
         # 歌词字体大小
         self.lyric_font_size = 12
         # 展示 歌曲封面
@@ -90,20 +97,19 @@ class LyricWindow(QWidget):
         self.lyric_display.setFont(get_custom_font(font_size=self.lyric_font_size))
         self.lyric_display.setStyleSheet("background-color: #faeeef;")
 
-        self.layout = QHBoxLayout()
-        self.setLayout(self.layout)
-        self.layout.addWidget(self.music_cover_label, 1)
-        self.layout.addWidget(self.lyric_display, 1)
-
-        self.lyric_manager = LyricManager(self)
+        self.lyric_layout = QHBoxLayout()
+        self.lyric_bar = QWidget()
+        self.lyric_bar.setLayout(self.lyric_layout)
+        self.lyric_layout.addWidget(self.music_cover_label, 1)
+        self.lyric_layout.addWidget(self.lyric_display, 1)
+        self.layout.addWidget(self.lyric_bar)
 
     def prepare_lyrics(self):
         """
         准备歌词数据
         :return:
         """
-        music_status = self.main_window.getCurMusicPlayStatus()
-        cur_music = music_status.music_data[music_status.play_music_index]
+        cur_music = self.main_window.getCurMusic()
         lyrics = cur_music.lyrics
         if not lyrics:
             rsp = get_kuwo_music_lyric(cur_music.rid)
@@ -136,3 +142,6 @@ class LyricWindow(QWidget):
         if pixmap is None:
             pixmap = self.main_window.music_pixmap
         self.music_cover_label.setPixmap(pixmap.scaledToHeight(self.music_cover_label.height()))
+
+    def show_window(self):
+        self.main_window.show_lyric_window()

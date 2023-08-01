@@ -250,14 +250,12 @@ class MusicPlayStatus:
     音乐播放状态类
     """
 
-    def __init__(self, music_table=None, music_data=[], play_music_index=-1, invalid_play_music_indexes=set()):
+    def __init__(self, music_table=None, music_data=[], play_music_index=0):
         """
         :param music_table: 音乐表格数据,一般与music_data 是同步的
         :param music_data: 音乐播放列表数据
         :param play_music_index: 记录当前 播放音乐在 music_data 中的索引,可用于切歌
-        :param invalid_play_music_indexes: 记录无法播放的歌曲的索引
         """
         self.music_table = music_table
         self.music_data = music_data
         self.play_music_index = play_music_index
-        self.invalid_play_music_indexes = invalid_play_music_indexes

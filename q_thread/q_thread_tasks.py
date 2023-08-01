@@ -38,26 +38,32 @@ class SearchWorker(QThread):
         self.finished_signal.emit(*result)
 
 
-class SingerHotMusicWorker(QThread):
+class SingerMusicWorker(QThread):
     """
-    获取歌手的热门歌曲任务
+    获取歌手的全部歌曲,可能需要分页加载以获取全部数据
     """
-    singer_hot_musics = Signal(list)
+    singer_musics = Signal(list)
     finished = Signal()
 
-    def __init__(self, singer_id):
+    def __init__(self, singer_id, pn=1, rn=30):
+        """
+        :param singer_id: 歌手id
+        :param pn: 页数
+        :param rn: 一页个数
+        """
         super().__init__()
         self.singer_id = singer_id
+        self.pn = pn
+        self.rn = rn
 
     def run(self):
-        rsp = get_kuwo_all_singer_music(self.singer_id)
+        rsp = get_kuwo_all_singer_music(self.singer_id, pn=self.pn, rn=self.rn)
         music_datas = [Music.from_dict(d) for d in rsp["data"]["list"]]
-        self.singer_hot_musics.emit(music_datas)
+        self.singer_musics.emit(music_datas)
         self.finished.emit()
 
 
 class SingerInfoWorker(QThread):
-
     singer_info = Signal(Singer)
     finished = Signal()
 

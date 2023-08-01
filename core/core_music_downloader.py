@@ -60,7 +60,8 @@ class CoreMusicDownloader:
         def _task():
             music_play_status = self.main_window.getCurMusicPlayStatus()
             for row in range(music_play_status.music_table.rowCount()):
-                if row in music_play_status.invalid_play_music_indexes:
+                music_id = self.main_window.getPlayStatusMusicByIndex(row).rid
+                if self.main_window.is_music_invalid(music_id):
                     continue
                 music = music_play_status.music_data[row]
                 if music.play_url is None:
@@ -68,7 +69,7 @@ class CoreMusicDownloader:
                 if music.play_url:
                     self.main_window.search_widget.show_download_checkbox_signal.emit(row)
                 else:
-                    music_play_status.invalid_play_music_indexes.add(row)
+                    self.main_window.invalid_play_music_set.add(music.rid)
             self.main_window.search_widget.show_download_checkbox_signal.emit(-1)
 
         self.main_window.search_widget.thread_pool.submit(_task)

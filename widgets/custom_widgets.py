@@ -49,6 +49,7 @@ class ClickableLabel(QLabel):
     def mousePressEvent(self, event):
         self.clicked.emit()
 
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtWidgets import QLabel
@@ -58,6 +59,7 @@ class CircularImageLabel(QLabel):
     """
     可以展示圆形图像的QLabel
     """
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.pixmap = QPixmap()
@@ -140,7 +142,8 @@ class HoverTableWidget(QTableWidget):
         :return:
         """
         # 如果当前行不可播放,则不显示 播放按钮
-        if row in self.main_window.getCurMusicPlayStatus().invalid_play_music_indexes:
+        music_id = self.main_window.getPlayStatusMusicByIndex(row).rid
+        if self.main_window.is_music_invalid(music_id):
             self.play_button.setVisible(False)
             return
         rect = self.visualItemRect(self.item(row, 0))  # get the rect of the cell
@@ -162,7 +165,8 @@ class HoverTableWidget(QTableWidget):
         :param row:
         :return:
         """
-        if row in self.main_window.getCurMusicPlayStatus().invalid_play_music_indexes:
+        music_id = self.main_window.getPlayStatusMusicByIndex(row).rid
+        if self.main_window.is_music_invalid(music_id):
             self.download_button.setVisible(False)
             return
         rect = self.visualItemRect(self.item(row, 0))
@@ -180,10 +184,20 @@ class HoverTableWidget(QTableWidget):
         self.download_button.setVisible(True)
 
     def check_scroll_position(self, value):
-        # 只有当处于搜索界面时才需要额外加载数据
+        """
+        处理滑动条到最底端需要额外加载数据的情况
+        :param value:
+        :return:
+        """
+        # 处于搜索界面时
         if self.main_window.stacked_widget.currentWidget() is self.main_window.search_widget:
             if value == self.verticalScrollBar().maximum():
                 self.main_window.search_widget.core_music_search.load_music_next_page()
+        # 处于歌手全部歌曲界面时
+        elif self.main_window.stacked_widget.currentWidget() is self.main_window.singer_main_window \
+                and self.main_window.singer_main_window.stacked_widget.currentWidget() is self.main_window.singer_main_window.singer_music_window:
+            if value == self.verticalScrollBar().maximum():
+                self.main_window.singer_main_window.singer_music_window.append_singer_music_to_music_table()
 
     def download_music(self):
         """
@@ -193,13 +207,13 @@ class HoverTableWidget(QTableWidget):
         row = self.current_hover_row
         music_play_status = self.main_window.getCurMusicPlayStatus()
         music = music_play_status.music_data[row]  # 获取音乐信息
-        if row in music_play_status.invalid_play_music_indexes:
+        if self.main_window.is_music_invalid(music.rid):
             return
         if music.play_url is None:
             music.play_url = get_music_download_url_by_mid(music.rid)
         if music.play_url is None:
             QMessageBox.warning(self, "下载错误", "此歌曲无法下载!")
-            music_play_status.invalid_play_music_indexes.add(row)
+            self.main_window.invalid_play_music_set.add(music.rid)
             # Set the current row to be disabled
             self.main_window.search_widget.core_music_search.mark_music_table_row(row, "gray", True)
             return

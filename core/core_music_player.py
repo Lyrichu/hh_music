@@ -86,10 +86,14 @@ class CoreMusicPlayer:
         # 自动跳过已经判定为无法播放的歌曲
         music_play_status = self.main_window.getCurMusicPlayStatus()
         index = music_play_status.play_music_index + 1
-        while index in music_play_status.invalid_play_music_indexes:
-            index += 1
         if index >= len(music_play_status.music_data):
             index = 0
+        music_id = music_play_status.music_data[index].rid
+        while self.main_window.is_music_invalid(music_id):
+            index += 1
+            if index >= len(music_play_status.music_data):
+                index = 0
+            music_id = music_play_status.music_data[index].rid
         self.main_window.core_music_advance_player.play_music_by_index(index)
 
     def prev_music(self):
@@ -99,10 +103,14 @@ class CoreMusicPlayer:
         """
         music_play_status = self.main_window.getCurMusicPlayStatus()
         index = music_play_status.play_music_index - 1
-        while index in music_play_status.invalid_play_music_indexes:
-            index -= 1
         if index < 0:
             index = len(music_play_status.music_data) - 1
+        music_id = music_play_status.music_data[index].rid
+        while self.main_window.is_music_invalid(music_id):
+            index -= 1
+            if index < 0:
+                index = len(music_play_status.music_data) - 1
+            music_id = music_play_status.music_data[index].rid
         self.main_window.core_music_advance_player.play_music_by_index(index)
 
     def cycle_music(self):
@@ -124,8 +132,8 @@ class CoreMusicPlayer:
         rest_play_indexes = []
         cur_index = music_play_status.play_music_index
         all_cnt = len(music_play_status.music_data)
-        valid_play_indexes = [index for index in range(all_cnt) if
-                              index != cur_index and index not in music_play_status.invalid_play_music_indexes]
+        valid_play_indexes = [index for index, music in enumerate(music_play_status.music_data) if
+                              index != cur_index and not self.main_window.is_music_invalid(music.rid)]
         if _type == "next":
             if cur_index == all_cnt - 1:
                 cur_index = -1
@@ -136,7 +144,7 @@ class CoreMusicPlayer:
             _range = range(0, cur_index)
         for index in _range:
             if index == music_play_status.play_music_index or \
-                    index in music_play_status.invalid_play_music_indexes:
+                    self.main_window.is_music_invalid(music_play_status.music_data[index].rid):
                 continue
             else:
                 rest_play_indexes.append(index)
@@ -220,16 +228,18 @@ class CoreMusicAdvancePlayer:
         # 上一个正在播放的行取消标记
         music_play_status = self.main_window.getCurMusicPlayStatus()
         if music_play_status.play_music_index >= 0 and \
-                music_play_status.play_music_index not in music_play_status.invalid_play_music_indexes:
+                not self.main_window.is_music_invalid(music_play_status.play_music_index):
             self.main_window.search_widget.core_music_search.unmark_music_table_row(music_play_status.play_music_index)
         music = music_play_status.music_data[index]
         music_play_status.play_music_index = index
-        if index not in music_play_status.invalid_play_music_indexes and music.play_url is None:
+        if not self.main_window.is_music_invalid(music.rid) and music.play_url is None:
             music.play_url = get_music_download_url_by_mid(music.rid)
         if music.play_url:
             url = QUrl(music.play_url)  # replace with your actual url
             self.main_window.player.setSource(url)
             self.main_window.player.play()
+            # 修改当前正在播放的音乐
+            self.main_window.cur_playing_music = music
             self.main_window.play_button.setIcon(QIcon(os.path.join(resource_dir, "icons/music_play_icon.png")))
             self.main_window.core_auto_play.update_music_play_slider()
             self.main_window.core_auto_play.update_bottom_bar()
@@ -238,7 +248,7 @@ class CoreMusicAdvancePlayer:
             self.main_window.his_play_list.append(MusicWithTime(music, get_cur_record_time()))
         else:
             QMessageBox.warning(self.main_window, "播放错误", "此歌曲无法播放!")
-            music_play_status.invalid_play_music_indexes.add(index)
+            self.main_window.invalid_play_music_set.add(music.rid)
             # Set the current row to be disabled
             self.main_window.search_widget.core_music_search.mark_music_table_row(index, "gray", True)
 
