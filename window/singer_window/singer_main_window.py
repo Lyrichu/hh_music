@@ -7,18 +7,17 @@
 from collections import defaultdict
 
 from PySide6.QtCore import QUrl
-from PySide6.QtGui import QPixmap
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
-from PySide6.QtWidgets import QLabel, QHBoxLayout, QWidget, QStackedWidget
+from PySide6.QtWidgets import QHBoxLayout, QWidget, QStackedWidget
 
-from widgets.singer_main_window_widgets import SingerHeaderLabel
-from window.template_window.template_with_back_button_window import TemplateWithBackButtonWindow
+from q_thread.q_thread_tasks import *
 from widgets.custom_widgets import *
+from widgets.singer_main_window_widgets import SingerHeaderLabel
+from window.singer_window.singer_album_window import SingerAlbumWindow
 from window.singer_window.singer_hot_music_window import SingerHotMusicWindow
 from window.singer_window.singer_music_window import SingerMusicWindow
-from window.singer_window.singer_album_window import SingerAlbumWindow
 from window.singer_window.singer_mv_window import SingerMvWindow
-from q_thread.q_thread_tasks import *
+from window.template_window.template_with_back_button_window import TemplateWithBackButtonWindow
 
 
 class SingerMainWindow(TemplateWithBackButtonWindow):
@@ -82,9 +81,6 @@ class SingerMainWindow(TemplateWithBackButtonWindow):
 
     def initSlotConnect(self):
         super().initSlotConnect()
-        self.back_button.clicked.connect(self.main_window.show_search_window)
-        self.back_home_button.clicked.connect(self.main_window.show_search_window)
-
         self.singer_header_hot_label.clicked.connect(self.show_singer_hot_music_window)
         self.singer_header_music_label.clicked.connect(self.show_singer_music_window)
         self.singer_header_album_label.clicked.connect(self.show_singer_album_window)
@@ -119,20 +115,21 @@ class SingerMainWindow(TemplateWithBackButtonWindow):
         self.singer_mv_window.show_window()
 
     def init_singer_info(self):
-        music_play_status = self.main_window.getCurMusicPlayStatus()
-        singer_name = music_play_status.music_data[music_play_status.play_music_index].artist
-        if not self.singer_data_cache[singer_name].get("info", None):
+        singer_id = self.main_window.getCurMusic().artistid
+        singer_name = self.main_window.getCurMusic().artist
+        if not self.singer_data_cache[singer_id].get("info", None):
             self.singer_info_worker = SingerInfoWorker(singer_name)
-            self.singer_info_worker.singer_info.connect(lambda singer_info: self.update_singer_info(singer_name,singer_info))
+            self.singer_info_worker.singer_info.connect(
+                lambda singer_info: self.update_singer_info(singer_id, singer_info))
             self.singer_info_worker.finished.connect(lambda: self.singer_info_worker.deleteLater())
             self.singer_info_worker.start()
 
-    def update_singer_info(self, singer_name, singer_info):
+    def update_singer_info(self, singer_id, singer_info):
         """
         更新歌手信息
         :return:
         """
-        self.singer_data_cache[singer_name]["info"] = singer_info
+        self.singer_data_cache[singer_id]["info"] = singer_info
         singer_desc = f"歌手:{singer_info.name}<br>国家:{singer_info.country}<br>歌曲总数:{singer_info.musicNum}"
         self.singer_desc_label.setText(singer_desc)
         # 下载歌手头像链接
@@ -158,7 +155,12 @@ class SingerMainWindow(TemplateWithBackButtonWindow):
         return label is self.singer_selected_label
 
     def singer_label_clicked(self, label):
+        if self.is_singer_label_selected(label):
+            return
         if self.singer_selected_label is not None:  # 如果有被选中的 label，则将其颜色变回黑色
             self.singer_selected_label.setStyleSheet("color: black;")
         self.singer_selected_label = label  # 更新被选中的 label
         self.singer_selected_label.setStyleSheet("color: green;")  # 将新选中的 label 颜色变为绿色
+
+    def show_window(self):
+        self.main_window.show_singer_main_window()

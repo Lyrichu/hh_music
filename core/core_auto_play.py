@@ -100,9 +100,7 @@ class CoreAutoPlay:
         :return:
         """
         self.main_window.bottom_bar.setVisible(True)
-        music_data = self.main_window.getCurMusicPlayStatus().music_data
-        play_music_index = self.main_window.getCurMusicPlayStatus().play_music_index
-        music = music_data[play_music_index]
+        music = self.main_window.getCurMusic()
         self.download_cover(music.pic)
         self.main_window.title_label.setText(music.name)
         self.main_window.artist_label.setText(music.artist)

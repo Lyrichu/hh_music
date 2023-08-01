@@ -201,3 +201,6 @@ class MusicSearcher(QWidget):
         self.main_layout.addWidget(self.result_hint_bar)
         self.main_layout.addWidget(self.music_table)
         self.setLayout(self.main_layout)
+
+    def show_window(self):
+        self.main_window.show_search_window()

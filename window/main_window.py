@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget, QSlider, QLa
 from const.music_playing_constants import *
 from core.core_auto_play import CoreAutoPlay
 from core.core_music_player import CoreMusicPlayer, CoreMusicAdvancePlayer
-from music_meta.music_meta import MusicWithTime, MusicPlayStatus
+from music_meta.music_meta import MusicWithTime, MusicPlayStatus, Music
 from window.music_searcher_window import MusicSearcher
 from window.recent_play_window import RecentPlayWindow
 from util.configs import save_music_config
@@ -53,6 +53,7 @@ class MainWindow(QMainWindow):
         """
         # 首先准备好历史播放数据
         self.recent_play_window.add_recent_play_list_to_music_table()
+        self.current_windows_list.append(self.stacked_widget.currentWidget())
         # 然后再切换到最近播放窗口
         self.stacked_widget.setCurrentWidget(self.recent_play_window)
 
@@ -61,6 +62,7 @@ class MainWindow(QMainWindow):
         展示搜索窗口
         :return:
         """
+        self.current_windows_list.append(self.stacked_widget.currentWidget())
         self.stacked_widget.setCurrentWidget(self.search_widget)
 
     def show_lyric_window(self):
@@ -72,6 +74,7 @@ class MainWindow(QMainWindow):
             # 如果当前不是歌词窗口,则切换到歌词窗口
             # 准备歌词
             self.lyric_window.prepare_lyrics()
+            self.current_windows_list.append(self.stacked_widget.currentWidget())
             self.stacked_widget.setCurrentWidget(self.lyric_window)
         else:
             # 如果已经是歌词窗口了,则返回到搜索窗口
@@ -82,8 +85,16 @@ class MainWindow(QMainWindow):
         展示歌手详情窗口
         :return:
         """
+        self.current_windows_list.append(self.stacked_widget.currentWidget())
         # 准备好歌手详情数据
         self.singer_main_window.show_singer_hot_music_window()
+
+    def back_to_prev_window(self):
+        if len(self.current_windows_list) == 0:
+            self.show_search_window()
+        else:
+            prev_window = self.current_windows_list.pop()
+            prev_window.show_window()
 
     def initUI(self):
         """
@@ -303,6 +314,12 @@ class MainWindow(QMainWindow):
         self.player.setAudioOutput(self.audioOutput)
         # 记录播放顺序
         self.play_order = MusicPlayingOrder.PLAY_IN_ORDER
+        # 记录当前正在播放的Music
+        self.cur_playing_music = None
+        # 记录不合法(一般是无法播放)的音乐
+        self.invalid_play_music_set = set()
+        # 维护窗口的切换顺序,方便返回上一个窗口
+        self.current_windows_list = []
 
     def initPlayStatus(self):
         """
@@ -351,6 +368,24 @@ class MainWindow(QMainWindow):
             else:
                 return self.singer_main_window.singer_music_window.music_play_status
         return self.search_widget.music_play_status
+
+    def getCurMusic(self) -> Music:
+        """
+        获取当前正在播放的音乐
+        :return:
+        """
+        return self.cur_playing_music
+
+    def getPlayStatusMusicByIndex(self, index):
+        """
+        获取当前播放列表的音乐(可能不是正在播放的音乐)
+        :return:
+        """
+        music_play_status = self.getCurMusicPlayStatus()
+        return music_play_status.music_data[index]
+
+    def is_music_invalid(self, music_id):
+        return music_id in self.invalid_play_music_set
 
     def changeEvent(self, event):
         """

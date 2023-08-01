@@ -3,10 +3,21 @@
 # @Time: 2023/7/21 15:07
 import os
 import time
+from functools import wraps
+import warnings
 
 from PySide6.QtGui import QFont, QFontDatabase
 
 resource_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "resource")
+
+
+def deprecated(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        warnings.warn(f"{func.__name__} is deprecated and will be removed in a future version.", DeprecationWarning)
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def format_duration(seconds):

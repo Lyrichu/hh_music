@@ -12,12 +12,35 @@ import requests
 
 from music_meta.music_meta import MusicWithTime, Music
 from util.configs import load_music_config
+from util.utils import deprecated
 from util.logs import LOGGER
+from api.kuwo_music_api import *
 
 
 def search_kuwo_music_by_keywords(keywords, pn=1, rn=20, add_play_url=False):
     """
     通过关键词搜索酷我音乐
+    :param keywords: 关键词
+    :param pn: 页数
+    :param rn: 一页返回数量
+    :param add_play_url: 是否要额外加载音乐下载链接
+    :return:
+    """
+    try:
+        json_data = get_kuwo_music_by_search(keywords, pn, rn)
+        if json_data["code"] != 200:
+            return 0, []
+        total = int(json_data["data"]["total"])
+        return total, get_music_search_list(json_data, add_play_url)
+    except Exception as e:
+        LOGGER.error(traceback.format_exc())
+        return 0, []
+
+
+@deprecated
+def search_kuwo_music_by_keywords1(keywords, pn=1, rn=20, add_play_url=False):
+    """
+    通过关键词搜索酷我音乐(早期接口,已废弃,请通过api模块的接口调用)
     :param keywords: 关键词
     :param pn: 页数
     :param rn: 一页返回数量
@@ -49,6 +72,24 @@ def get_music_download_url_by_mid(mid):
     :return:
     """
     try:
+        json_data = get_kuwo_music_play_url(mid)
+        if json_data["code"] != 200:
+            return None
+        else:
+            return json_data["data"]["url"]
+    except Exception as e:
+        LOGGER.error(traceback.format_exc())
+        return None
+
+
+@deprecated
+def get_music_download_url_by_mid1(mid):
+    """
+    通过mid 获取 酷我音乐 下载链接(早期接口,已废弃,请通过api模块的接口调用)
+    :param mid:
+    :return:
+    """
+    try:
         kuwo_music_info_url = f"https://kuwo.cn/api/v1/www/music/playUrl?mid={mid}&type=music&httpsStatus=1&reqId=8b6a0650-36fd-11ec-970b-9d2518c9e2df"
         music_config = load_music_config()
         headers = music_config.get("headers", None)
@@ -60,6 +101,7 @@ def get_music_download_url_by_mid(mid):
             return json_data["data"]["url"]
     except Exception as e:
         LOGGER.error(traceback.format_exc())
+        return None
 
 
 def _get_user_music_history_play_list_file():

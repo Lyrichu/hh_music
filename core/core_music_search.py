@@ -97,7 +97,7 @@ class CoreMusicSearch:
             try:
                 rsp = get_kuwo_music_lyric(mid)
                 music.lyrics = Lyric.lyrics_from_dict(rsp)
-                LOGGER.info(f"parse lyrics succeed for music:{music.name}")
+                # LOGGER.info(f"parse lyrics succeed for music:{music.name}")
             except Exception as e:
                 LOGGER.error(f"parse lyrics error for music:{music.name}: " + traceback.format_exc())
 
@@ -117,12 +117,13 @@ class CoreMusicSearch:
         :return:
         """
         def _mark_invalid(i, music):
-            if i in self.main_window.getCurMusicPlayStatus().invalid_play_music_indexes:
+            if self.main_window.is_music_invalid(music.rid):
+                self.mark_music_table_row(i, disable=True)
                 return
             if music.play_url is None:
                 music.play_url = get_music_download_url_by_mid(music.rid)
             if music.play_url is None:
-                self.main_window.mark_music_table_row(i, disable=True)
+                self.mark_music_table_row(i, disable=True)
                 LOGGER.info(f"mark {music.artist}/{music.name} as disable succeed!")
 
         if self.main_window.getCurMusicPlayStatus().music_data:
@@ -197,11 +198,13 @@ class CoreMusicSearch:
         :param disable: 是否禁用
         :return:
         """
-        for col in range(self.main_window.getCurMusicPlayStatus().music_table.columnCount()):
+        music_play_status = self.main_window.getCurMusicPlayStatus()
+        for col in range(music_play_status.music_table.columnCount()):
             item = self.main_window.getCurMusicPlayStatus().music_table.item(row, col)
             if disable:
                 item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
-                self.main_window.getCurMusicPlayStatus().invalid_play_music_indexes.add(row)
+                music_id = music_play_status.music_data[row].rid
+                self.main_window.invalid_play_music_set.add(music_id)
             item.setBackground(QBrush(QColor(color)))
 
     def unmark_music_table_row(self, row):
