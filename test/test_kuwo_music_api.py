@@ -23,9 +23,10 @@ class KuwoMusicApiTest(TestCase):
         self.assertEqual(200, rsp2["code"])
 
     def test_get_kuwo_mv_play_url(self):
-        mid = 235882595
+        mid = 48017883
         rsp = get_kuwo_mv_play_url(mid)
         self.assertEqual(200, rsp["code"])
+        print(rsp)
 
     def test_get_kuwo_music_lyric(self):
         mid = 235882595
@@ -33,11 +34,12 @@ class KuwoMusicApiTest(TestCase):
         assert "data" in rsp
 
     def test_get_kuwo_music_by_search(self):
-        key = "我记得"
-        pn = 2
+        key = "张杰"
+        pn = 1
         rn = 15
         rsp = get_kuwo_music_by_search(key=key, pn=pn, rn=rn)
         self.assertEqual(200, rsp["code"])
+        print(rsp)
 
     def test_get_kuwo_music_search_hint(self):
         key = "我记得"
@@ -55,9 +57,10 @@ class KuwoMusicApiTest(TestCase):
 
     def test_get_kuwo_album_by_search_keyword(self):
         key = "十二新作"
-        pn = 2
+        pn = 1
         rn = 15
         rsp = get_kuwo_album_by_search_keyword(key=key, pn=pn, rn=rn)
+        print(rsp)
         self.assertEqual(200, rsp["code"])
 
     def test_get_kuwo_mv_by_search_keyword(self):
@@ -75,7 +78,7 @@ class KuwoMusicApiTest(TestCase):
         self.assertEqual(200, rsp["code"])
 
     def test_get_kuwo_artist_by_search_keyword(self):
-        key = "张韶涵"
+        key = "张杰"
         pn = 1
         rn = 10
         rsp = get_kuwo_artist_by_search_keyword(key=key, pn=pn, rn=rn)
@@ -129,17 +132,21 @@ class KuwoMusicApiTest(TestCase):
     def test_get_kuwo_all_singer_music(self):
         artist_id = 89199
         rsp = get_kuwo_all_singer_music(artist_id)
+        print(rsp)
         self.assertEqual(200, rsp["code"])
 
     def test_get_kuwo_all_singer_album(self):
         artist_id = 89199
-        rsp = get_kuwo_all_singer_album(artist_id)
+        rsp = get_kuwo_all_singer_album(artist_id, rn=200)
+        print(rsp)
+        print(len(rsp["data"]["albumList"]))
         self.assertEqual(200, rsp["code"])
 
     def test_get_kuwo_all_singer_mv(self):
-        artist_id = 89199
-        rsp = get_kuwo_all_singer_mv(artist_id)
+        artist_id = 680
+        rsp = get_kuwo_all_singer_mv(artist_id, pn=2, rn=200)
         self.assertEqual(200, rsp["code"])
+        print(rsp)
 
     def test_get_kuwo_music_info(self):
         mid = 235882595

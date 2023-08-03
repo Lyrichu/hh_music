@@ -2,6 +2,7 @@
 # author:lyrichu@foxmail.com
 # @Time: 2023/7/23 16:50
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 from PySide6.QtCore import QTimer, QEvent
 from PySide6.QtGui import QAction
@@ -74,6 +75,7 @@ class MainWindow(QMainWindow):
             # 如果当前不是歌词窗口,则切换到歌词窗口
             # 准备歌词
             self.lyric_window.prepare_lyrics()
+            self.lyric_window.update_image()
             self.current_windows_list.append(self.stacked_widget.currentWidget())
             self.stacked_widget.setCurrentWidget(self.lyric_window)
         else:
@@ -175,25 +177,6 @@ class MainWindow(QMainWindow):
     def initBottomLayout(self):
         # 初始音乐播放化进度条
         self.music_play_slider = QSlider(Qt.Horizontal)
-        self.music_play_slider.setStyleSheet("""
-        QSlider::groove:horizontal {
-            height: 4px;
-            background: #5cb85c;
-            margin: 0px;
-        }
-        QSlider::handle:horizontal {
-            background: #5cb85c;
-            width: 10px;
-            margin: -3px 0; 
-            border-radius: 4px; 
-        }
-        QSlider::add-page:horizontal {
-            background: #dddddd;
-        }
-        QSlider::sub-page:horizontal {
-            background: #5cb85c;
-        }
-        """)
         self.music_play_slider.setMinimum(0)
         self.music_play_slider.setMaximum(100)  # Suppose the maximum value is 100
         self.music_play_slider.setValue(0)
@@ -300,6 +283,8 @@ class MainWindow(QMainWindow):
         初始化一些必要的资源
         :return:
         """
+        # 线程池
+        self.thread_pool = ThreadPoolExecutor(max_workers=20)
         # 网络资源管理器
         self.music_cover_downloader = QNetworkAccessManager(self)
         self.music_cover_downloader.finished.connect(self.core_auto_play.update_music_cover)

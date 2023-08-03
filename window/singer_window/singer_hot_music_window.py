@@ -6,6 +6,9 @@
 """
 from collections import defaultdict
 
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QProgressDialog
+
 from core.core_music_search import CoreMusicSearch
 from music_meta.music_meta import MusicPlayStatus
 from q_thread.q_thread_tasks import SingerMusicWorker
@@ -44,11 +47,14 @@ class SingerHotMusicWindow(BaseTemplateWindow):
         # 避免重复加载
         singer_id = self.main_window.main_window.getCurMusic().artistid
         if singer_id not in self.music_cache:
+            self.show_progress_dialog()
             self.add_singer_hot_music_to_music_table(True)
         else:
             self.music_play_status = self.music_cache[singer_id]["music_play_status"]
             self.music_table = self.music_play_status.music_table
-        self.main_window.stacked_widget.setCurrentWidget(self.main_window.singer_hot_music_window)
+            # 重置搜索结果
+            self._update_music_table(self.music_play_status.music_data, True)
+        self.main_window.stacked_widget.setCurrentWidget(self)
         self.main_window.main_window.stacked_widget.setCurrentWidget(self.main_window)
 
     def add_singer_hot_music_to_music_table(self, reset=False):
@@ -72,6 +78,11 @@ class SingerHotMusicWindow(BaseTemplateWindow):
         :param reset: 是否重置 music_table
         :return:
         """
+        if len(music_datas) == 0:
+            self.close_progress_dialog()
+            self.task_failed_warning()
+            return
+        self.update_hot_music_header_label(len(music_datas))
         CoreMusicSearch.common_add_music_table_datas(self.music_table, music_datas, not reset)
         self.music_table.setVisible(True)
         self.music_play_status = MusicPlayStatus(
@@ -83,8 +94,12 @@ class SingerHotMusicWindow(BaseTemplateWindow):
         self.main_window.main_window.search_widget.core_music_search.search_backend_task()
         # 添加缓存
         self.add_music_play_status_to_cache()
+        self.close_progress_dialog()
+
+    def update_hot_music_header_label(self, music_cnt):
+        self.main_window.singer_header_hot_label.setText(f"精选{music_cnt}")
 
     def add_music_play_status_to_cache(self):
         singer_id = self.main_window.main_window.getCurMusic().artistid
-        if "music_play_status" not in self.music_cache[singer_id]:
-            self.music_cache[singer_id]["music_play_status"] = self.music_play_status
+        self.music_cache[singer_id]["music_play_status"] = self.music_play_status
+

@@ -27,11 +27,7 @@ class CoreMusicSearch:
 
     def search_music(self):
         # 当用户搜索时,显示一个等待条
-        self.main_window.search_widget.search_progress_dialog = \
-            QProgressDialog("努力搜索ing...", "Cancel", 0, 0, self.main_window.search_widget)
-        self.main_window.search_widget.search_progress_dialog.setCancelButton(None)  # remove cancel button
-        self.main_window.search_widget.search_progress_dialog.setWindowModality(Qt.ApplicationModal)
-        self.main_window.search_widget.search_progress_dialog.show()
+        self.main_window.search_widget.show_progress_dialog()
 
         # Start a new q_thread to do the search
         self.search_worker = SearchWorker(self.main_window.search_widget.search_input.text())
@@ -63,11 +59,10 @@ class CoreMusicSearch:
         :return:
         """
         # 关闭 等待条
-        self.main_window.search_widget.search_progress_dialog.close()
+        self.main_window.search_widget.close_progress_dialog()
         # 处理错误
         if total == 0 or len(search_results) == 0:
-            QMessageBox.warning(self.main_window.search_widget, "额出错了...",
-                                f"搜索 {self.main_window.search_widget.search_input.text()} 失败,请稍后重试~")
+            self.main_window.search_widget.task_failed_warning()
         self.main_window.stacked_widget.currentWidget().music_play_status.music_data = search_results
         self.search_backend_task()
         self.main_window.stacked_widget.currentWidget().music_play_status.music_table.setVisible(True)

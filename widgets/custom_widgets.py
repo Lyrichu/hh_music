@@ -9,7 +9,7 @@ import threading
 
 import requests
 from PySide6.QtCore import QSize, Qt, QRect, Signal
-from PySide6.QtGui import QIcon, QMouseEvent, QPainter, QColor, QTextFormat, QPainterPath
+from PySide6.QtGui import QIcon, QMouseEvent, QPainter, QColor, QTextFormat, QPainterPath, QPixmap
 from PySide6.QtWidgets import *
 
 from util.configs import load_music_config
@@ -41,18 +41,13 @@ class ClickableLabel(QLabel):
     """
     clicked = Signal()
 
-    def __init__(self, parent=None):
-        super().__init__()
+    def __init__(self, parent=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.parent = parent
         self.setEnabled(True)
 
     def mousePressEvent(self, event):
         self.clicked.emit()
-
-
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainter, QPixmap
-from PySide6.QtWidgets import QLabel
 
 
 class CircularImageLabel(QLabel):
@@ -76,6 +71,27 @@ class CircularImageLabel(QLabel):
             path.addEllipse(0, 0, self.width(), self.height())
             painter.setClipPath(path)
             painter.drawPixmap(0, 0, self.pixmap.scaled(self.width(), self.height(), Qt.KeepAspectRatioByExpanding))
+
+
+class HoverColorNameLabel(ClickableLabel):
+    def __init__(self, main_window, *args, **kwargs):
+        super().__init__(main_window, *args, **kwargs)
+        """
+        实现的效果是:可点击的label,鼠标未悬浮到文字上方时,文字为黑色
+        鼠标悬浮到文字上方时，文字为绿色
+        """
+        self.main_window = main_window
+        self.setStyleSheet("color: black;")  # 初始颜色为黑色
+        self.setMouseTracking(True)  # 启用鼠标追踪
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+
+    def enterEvent(self, event):
+        self.setStyleSheet("color: green;")  # 鼠标悬停时变为绿色
+
+    def leaveEvent(self, event):
+        self.setStyleSheet("color: black;")
 
 
 class HoverTableWidget(QTableWidget):
