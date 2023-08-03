@@ -7,10 +7,11 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 from window.main_window import MainWindow
 
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.setWindowIcon(QIcon("resource/icons/music_app_icon.png"))
+    with open("resource/styles/stylesheet.qss") as f:
+        window.setStyleSheet(f.read())
     window.show()
-    app.exec()
+    sys.exit(app.exec())

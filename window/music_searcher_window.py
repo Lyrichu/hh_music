@@ -14,11 +14,12 @@ from music_meta.music_meta import MusicPlayStatus
 from widgets.custom_widgets import HoverTableWidget
 
 from util.utils import *
+from window.template_window.base_template_window import BaseTemplateWindow
 
 resource_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "resource")
 
 
-class MusicSearcher(QWidget):
+class MusicSearcher(BaseTemplateWindow):
     """
     音乐搜索的主类
     """
@@ -26,8 +27,7 @@ class MusicSearcher(QWidget):
     show_download_checkbox_signal = Signal(int)
 
     def __init__(self, main_window):
-        super().__init__()
-        self.main_window = main_window
+        super().__init__(main_window)
         self.initUI()
         # 公共线程池
         self.thread_pool = ThreadPoolExecutor(max_workers=10)
@@ -40,6 +40,7 @@ class MusicSearcher(QWidget):
         初始化UI
         :return:
         """
+        super().initUI()
         self.setGeometry(100, 100, 500, 500)
         self.initCores()
         self.initResources()
@@ -196,11 +197,12 @@ class MusicSearcher(QWidget):
         初始化主界面布局
         :return:
         """
-        self.main_layout = QVBoxLayout()
-        self.main_layout.addWidget(self.search_bar)
-        self.main_layout.addWidget(self.result_hint_bar)
-        self.main_layout.addWidget(self.music_table)
-        self.setLayout(self.main_layout)
+        self.layout.addWidget(self.search_bar)
+        self.layout.addWidget(self.result_hint_bar)
+        self.layout.addWidget(self.music_table)
+
+    def task_failed_warning(self):
+        QMessageBox.warning(self, "额出错了...", f"搜索 {self.search_input.text()} 失败,请稍后重试~")
 
     def show_window(self):
         self.main_window.show_search_window()

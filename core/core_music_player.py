@@ -35,8 +35,6 @@ class CoreMusicPlayer:
         """
         if self.main_window.player.isPlaying():
             self.pause_music()
-            # 更改播放图标为暂停
-            self.main_window.play_button.setIcon(QIcon(os.path.join(resource_dir, "icons/music_pause_icon.png")))
         else:
             self.main_window.player.play()
             # 更改播放图标为播放
@@ -48,6 +46,8 @@ class CoreMusicPlayer:
         :return:
         """
         self.main_window.player.pause()
+        # 更改播放图标为暂停
+        self.main_window.play_button.setIcon(QIcon(os.path.join(resource_dir, "icons/music_pause_icon.png")))
 
     def play_next_music(self):
         """
