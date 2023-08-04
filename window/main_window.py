@@ -393,7 +393,7 @@ class MainWindow(QMainWindow):
                 else:
                     self.lyric_window.lyric_font_size = 12
                     self.lyric_window.lyric_manager.lyric_part_display_lines = 5
-                self.lyric_window.lyric_display.setFont(get_custom_font(font_size=self.lyric_window.lyric_font_size))
+                #self.lyric_window.lyric_display.setFont(get_custom_font(font_size=self.lyric_window.lyric_font_size))
 
     def closeEvent(self, event):
         """

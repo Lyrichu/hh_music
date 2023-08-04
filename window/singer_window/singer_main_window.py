@@ -119,11 +119,11 @@ class SingerMainWindow(TemplateWithBackButtonWindow):
         singer_name = self.main_window.getCurMusic().artist
         singer_info = self.singer_data_cache[singer_id].get("info", None)
         if singer_info is None:
-            self.singer_info_worker = SingerInfoWorker(singer_name)
-            self.singer_info_worker.singer_info.connect(
+            singer_info_worker = SingerInfoWorker(singer_name)
+            singer_info_worker.singer_info.connect(
                 lambda singer_info: self.update_singer_info(singer_id, singer_info))
-            self.singer_info_worker.finished.connect(lambda: self.singer_info_worker.deleteLater())
-            self.singer_info_worker.start()
+            singer_info_worker.finished.connect(lambda: singer_info_worker.deleteLater())
+            singer_info_worker.start()
         else:
             self.update_singer_info(singer_id, singer_info)
 

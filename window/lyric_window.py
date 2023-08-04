@@ -94,7 +94,7 @@ class LyricWindow(TemplateWithBackButtonWindow):
         self.lyric_display.setReadOnly(True)
         self.lyric_display.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lyric_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lyric_display.setFont(get_custom_font(font_size=self.lyric_font_size))
+        # self.lyric_display.setFont(get_custom_font(font_size=self.lyric_font_size))
         self.lyric_display.setStyleSheet("background-color: #faeeef;")
 
         self.lyric_layout = QHBoxLayout()

@@ -22,7 +22,8 @@ class SearchWorker(QThread):
     音乐搜索的工作类
     """
     # (搜索总数,当前音乐列表)
-    finished_signal = Signal(int, list)
+    search_res = Signal(int, list)
+    finished = Signal()
 
     def __init__(self, keyword):
         super().__init__()
@@ -40,7 +41,7 @@ class SearchWorker(QThread):
         # Call the search function here and get the result
         result = self.search_music(self.keyword)
         # Emit the signal when the search is finished
-        self.finished_signal.emit(*result)
+        self.search_res.emit(*result)
 
 
 class SingerMusicWorker(QThread):

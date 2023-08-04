@@ -30,9 +30,10 @@ class CoreMusicSearch:
         self.main_window.search_widget.show_progress_dialog()
 
         # Start a new q_thread to do the search
-        self.search_worker = SearchWorker(self.main_window.search_widget.search_input.text())
-        self.search_worker.finished_signal.connect(self.display_music_search_result)
-        self.search_worker.start()
+        search_worker = SearchWorker(self.main_window.search_widget.search_input.text())
+        search_worker.search_res.connect(self.display_music_search_result)
+        search_worker.finished.connect(lambda: search_worker.deleteLater())
+        search_worker.start()
 
     def load_music_next_page(self):
         """

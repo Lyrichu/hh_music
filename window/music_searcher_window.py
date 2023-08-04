@@ -84,7 +84,7 @@ class MusicSearcher(BaseTemplateWindow):
         """
         # 用于提示搜索总数
         self.result_label = QLabel()
-        self.result_label.setFont(get_custom_font())
+        # self.result_label.setFont(get_custom_font())
         self.result_label.setStyleSheet("QLabel { color : green; }")
 
         self.batch_download_button = MyPushButton(os.path.join(resource_dir, "icons/batch_download_icon.png"))
@@ -141,7 +141,7 @@ class MusicSearcher(BaseTemplateWindow):
         music_table.verticalHeader().setVisible(False)  # hide vertical header
         music_table.horizontalHeader().setVisible(True)  # hide horizontal header initially
         music_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        music_table.setFont(get_custom_font(font_size=10))
+        # music_table.setFont(get_custom_font(font_size=10))
         music_table.setShowGrid(False)
         music_table.verticalHeader().setVisible(False)
         music_table.setSelectionBehavior(QAbstractItemView.SelectRows)  # select entire rows

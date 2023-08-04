@@ -64,12 +64,12 @@ class SingerHotMusicWindow(BaseTemplateWindow):
         :return:
         """
         singer_id = self.main_window.main_window.getCurMusic().artistid
-        self.singer_hot_music_worker = SingerMusicWorker(singer_id)
-        self.singer_hot_music_worker.singer_musics.connect(
+        singer_hot_music_worker = SingerMusicWorker(singer_id)
+        singer_hot_music_worker.singer_musics.connect(
             lambda music_datas: self._update_music_table(music_datas, reset))
         # 确保任务完成，线程被销毁
-        self.singer_hot_music_worker.finished.connect(lambda: self.singer_hot_music_worker.deleteLater())
-        self.singer_hot_music_worker.start()
+        singer_hot_music_worker.finished.connect(lambda: singer_hot_music_worker.deleteLater())
+        singer_hot_music_worker.start()
 
     def _update_music_table(self, music_datas, reset=False):
         """
