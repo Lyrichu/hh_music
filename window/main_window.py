@@ -4,6 +4,7 @@
 import os
 from concurrent.futures import ThreadPoolExecutor
 
+import qt_material
 from PySide6.QtCore import QTimer, QEvent
 from PySide6.QtGui import QAction
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
@@ -29,11 +30,12 @@ resource_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, app=None):
         """
         主窗口类
         """
         super().__init__()
+        self.app = app
         self.setWindowTitle("HH🎵播放器")
         self.setGeometry(100, 100, 500, 500)
 
@@ -173,6 +175,15 @@ class MainWindow(QMainWindow):
         log_action.triggered.connect(self.open_log_window)
         log_menu = self.menuBar().addMenu("日志")
         log_menu.addAction(log_action)
+
+        # 主题美化,基于qt-material
+        theme_menu = self.menuBar().addMenu("主题")
+        change_theme_menu = theme_menu.addMenu("切换主题")
+        # 动态添加主题
+        for theme in qt_material.list_themes():
+            theme_action = QAction(theme, self)
+            theme_action.triggered.connect(lambda checked=False, theme=theme: self.apply_theme(theme))
+            change_theme_menu.addAction(theme_action)
 
     def initBottomLayout(self):
         # 初始音乐播放化进度条
@@ -372,6 +383,10 @@ class MainWindow(QMainWindow):
     def is_music_invalid(self, music_id):
         return music_id in self.invalid_play_music_set
 
+    def apply_theme(self, theme):
+        # 应用选定的主题
+        qt_material.apply_stylesheet(self.app, theme=theme)
+
     def changeEvent(self, event):
         """
         监听窗口的改变
@@ -393,7 +408,7 @@ class MainWindow(QMainWindow):
                 else:
                     self.lyric_window.lyric_font_size = 12
                     self.lyric_window.lyric_manager.lyric_part_display_lines = 5
-                #self.lyric_window.lyric_display.setFont(get_custom_font(font_size=self.lyric_window.lyric_font_size))
+                # self.lyric_window.lyric_display.setFont(get_custom_font(font_size=self.lyric_window.lyric_font_size))
 
     def closeEvent(self, event):
         """
